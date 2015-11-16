@@ -34,8 +34,6 @@ defmodule Rasp do
   use Application
   import Helpers
 
-  # See http://elixir-lang.org/docs/stable/elixir/Application.html
-  # for more information on OTP Applications
   def start(_type, _args) do
     Rasp.Supervisor.start_link
   end
@@ -58,10 +56,13 @@ defmodule Rasp do
   def process(:help) do
     print """
       Usage:
-      ./rasp --reddit [subreddit] --rules [rules]
+
+        ./rasp --reddit [subreddit] --rules [rules]
 
       Options:
-      --help  Show this help message.
+        --rules  specify rules to use (a file containing JSON)
+        --reddit Specify subreddit to use 
+        --help   Show this help message
     """
   end
 
