@@ -16,9 +16,10 @@ First if your interests are different than mine (and they probably are) change `
 
 To compile the command line program, run:
 
+    $ mix deps.get
     $ mix escript.build
 
-Required arguments are like so:
+Invoke it with the required arguments like this:
 
     $ ./rasp --reddit=programming --rules=rules.json
 
