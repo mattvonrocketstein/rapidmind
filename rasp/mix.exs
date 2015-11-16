@@ -1,8 +1,8 @@
-defmodule ScannerCli.Mixfile do
+defmodule Rasp.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :scanner,
+    [app: :rasp,
      version: "0.0.1",
      elixir: "~> 1.1.0",
      escript: escript,
@@ -14,7 +14,7 @@ defmodule ScannerCli.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [ applications: [],
-      mod: { ScannerCli, [] } ]
+      mod: { Rasp, [] } ]
   end
 
     # Type `mix help deps` for more examples and options
@@ -31,7 +31,7 @@ defmodule ScannerCli.Mixfile do
   #
   # Type `mix help escript.build` for more information
   defp escript do
-    [ main_module: ScannerCli,
+    [ main_module: Rasp,
       embedd_elixir: true ]
   end
 

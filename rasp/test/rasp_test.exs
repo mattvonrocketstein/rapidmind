@@ -1,4 +1,4 @@
-defmodule ScannerCliTest do
+defmodule RaspTest do
   use ExUnit.Case
 
   test "the truth" do
