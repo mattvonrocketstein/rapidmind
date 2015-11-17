@@ -7,8 +7,12 @@ defmodule Rasp.Supervisor do
 
   def init([]) do
     children = [
-      # Define workers and child supervisors to be supervised
-      # worker(Rasp.Worker, [arg1, arg2, arg3])
+      # Define workers and child supervisors to be supervised.  
+      # similar effect as to FizzBuzz.start_link
+      worker(   
+        FizzBuzz, #server module
+        []        # args
+      ) 
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

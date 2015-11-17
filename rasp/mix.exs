@@ -13,7 +13,7 @@ defmodule Rasp.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [ applications: [],
+    [ applications: [:logger],
       mod: { Rasp, [] } ]
   end
 
@@ -22,8 +22,9 @@ defmodule Rasp.Mixfile do
     [
         { :floki, git: "https://github.com/philss/floki.git", tag: "v0.7.0" },
         { :mongo, git: "https://github.com/checkiz/elixir-mongo.git", tag: "0.5.2" },
-        {:httpoison, "~> 0.8.0"},
-        {:poison, "~> 1.5"},
+        { :httpoison, "~> 0.8.0"},
+        { :poison, "~> 1.5"},
+        {:apex, "~>0.3.2"},
     ]
   end
 

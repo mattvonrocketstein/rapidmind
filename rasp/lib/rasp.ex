@@ -1,58 +1,33 @@
 require IEx
 
-defmodule Helpers do
-
-  defmacro print(thing) do
-      if String.valid?(thing) do
-          quote bind_quoted: binding() do
-           IO.puts thing
-          end
-      else
-         quote bind_quoted: binding() do
-           IO.puts("#{inspect thing}")
-          end
-      end
-  end
-
-  def string_to_regex(x) do elem(Regex.compile(x), 1) end
-
-  def read_config_file(rules_file) do
-    {:ok, body} = File.read(rules_file)
-    result = Poison.Parser.parse!(body)
-    num_rules = Enum.count(result)
-    tmp = Enum.join(result,",")
-    print "Read #{num_rules} rules: #{tmp}"
-    result
-  end
-end
-
 defmodule Rasp do
   @moduledoc """
   Things and stuff.....
   """
-
+  require Logger
   use Application
+  import Apex
   import Helpers
-
+  #import FizzBuzz
   def start(_type, _args) do
     Rasp.Supervisor.start_link
   end
 
   def main(args) do
+    
     args |> parse_args |> process
   end
 
   def parse_args(args) do
     switches = [
-      help: :boolean,
+      help:   :boolean,
       reddit: :string,
-      rules: :string ]
+      rules:  :string ]
     {options, _, _} = OptionParser.parse(args, switches: switches)
     options
   end
 
   def process([]) do IO.puts "Incorrect usage (use --help for help)" end
-
   def process(:help) do
     print """
       Usage:
@@ -67,32 +42,38 @@ defmodule Rasp do
   end
 
   def process(options) do
-    print options
+    #ap options
     cond do
       options[:help] ->
         process(:help)
+      
       options[:reddit] && options[:rules] ->
         do_process(options, options[:reddit], options[:rules])
+      
       options[:reddit] || options[:rules] ->
-        process([])
+        # incorrect usage
+        process([]) 
+      
       true ->
         process([])
       end
   end
-
+  def extract_links_and_comments(body) do
+    links = Floki.find(body, "div.entry a.title") |> Floki.attribute("href")
+    comments = Floki.find(body, "div.entry a.comments") |> Floki.attribute("href")
+    links_and_comments = Enum.zip(links, comments)
+  end
   def do_process(options, reddit, rules_file) do
     HTTPoison.start
-    print "Scanning subreddit: #{reddit}"
+    ap "Scanning subreddit: #{reddit}"
     source = "https://www.reddit.com/r/#{reddit}"
     rules = Helpers.read_config_file(rules_file)
     case HTTPoison.get(source) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        #print "#{source}: retrieved"
-        links = Floki.find(body, "div.entry a.title") |> Floki.attribute("href")
-        comments = Floki.find(body, "div.entry a.comments") |> Floki.attribute("href")
-        links_and_comments = Enum.zip(links, comments)
+        4..6 |> Enum.map(&FizzBuzz.print/1)
+        links_and_comments = extract_links_and_comments(body)
         out = links_and_comments
-        |> Enum.map(fn {url,comments} -> get_page(source, comments, url, rules) end)
+        |> Enum.map(fn {url, comments} -> get_page(source, comments, url, rules) end)
         |> Enum.filter(fn(x)->x end)
         post_process(options, out)
       {:ok, %HTTPoison.Response{status_code: 404}} ->
@@ -105,7 +86,7 @@ defmodule Rasp do
   end
 
   def post_process(options, result) do
-    print result
+    ap result
     cond do
       options[:mongo] ->
         write_to_mongo(options[:mongo], result)
@@ -152,7 +133,7 @@ defmodule Rasp do
      {:ok, %HTTPoison.Response{status_code: 404}} ->
        print ".. #{url}: Not found :("
      {:error, %HTTPoison.Error{reason: reason}} ->
-       print ".. #{url}: error #{reason}"
+       print ".. #{url}: error #{inspect reason}"
      {:ok, %HTTPoison.Response{status_code: status_code}} ->
        print ".. #{url}: unhandled code #{status_code}"
     end
