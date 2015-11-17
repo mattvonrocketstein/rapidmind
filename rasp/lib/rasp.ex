@@ -58,15 +58,18 @@ defmodule Rasp do
         process([])
       end
   end
+  
   def extract_links_and_comments(body) do
     links = Floki.find(body, "div.entry a.title") |> Floki.attribute("href")
     comments = Floki.find(body, "div.entry a.comments") |> Floki.attribute("href")
     links_and_comments = Enum.zip(links, comments)
   end
+
   def do_process(options, reddit, rules_file) do
     HTTPoison.start
     ap "Scanning subreddit: #{reddit}"
     source = "https://www.reddit.com/r/#{reddit}"
+    # careful: read the rules only once
     rules = Helpers.read_config_file(rules_file)
     case HTTPoison.get(source) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
@@ -88,6 +91,7 @@ defmodule Rasp do
   def post_process(options, result) do
     ap result
     cond do
+      #options[:json] ->
       options[:mongo] ->
         write_to_mongo(options[:mongo], result)
       true ->
@@ -125,8 +129,6 @@ defmodule Rasp do
 
   def get_page(source, comments, url, rules) do
     print url
-    # fixme: this rereads the config unnecessarily >:/
-    #rules = read_config_file(rules)
     case HTTPoison.get(url, [], [follow_redirect: true]) do
      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
        process_page(source, comments, url, body, rules)
