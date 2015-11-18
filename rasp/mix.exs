@@ -24,7 +24,7 @@ defmodule Rasp.Mixfile do
         { :mongo, git: "https://github.com/checkiz/elixir-mongo.git", tag: "0.5.2" },
         { :httpoison, "~> 0.8.0"},
         { :poison, "~> 1.5"},
-        {:apex, "~>0.3.2"},
+        { :apex, "~>0.3.2"},
     ]
   end
 

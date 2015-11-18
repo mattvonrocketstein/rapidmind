@@ -1,42 +1,21 @@
+defmodule State do
+  def new do
+    {:ok, agent} = Agent.start_link fn -> %{} end
+    agent
+  end 
+  def put(agent, k, v) do
+    Agent.update(agent, fn map -> Map.put(map, k, v) end)
+  end
+  def get(agent, k) do
+    Agent.get(agent, fn map -> Map.get(map, k) end)
+  end
+  def stop(agent) do Agent.stop(agent) end
+end
+
 defmodule FizzBuzz do
 	
   use GenServer
 	require Logger
-  #################################
-
-	def new do
-    spawn fn -> loop(0) end
-  end
-
-  def set(pid, value) do
-    send(pid, {:set, value, self()})
-    receive do x -> x end
-  end
-
-  def click(pid) do
-    send(pid, {:click, self()})
-    receive do x -> x end
-  end
-
-  def get(pid) do
-    send(pid, {:get, self()})
-    receive do x -> x end
-  end
-
-  # Counter implementation
-  defp loop(n) do
-    receive do
-      {:click, from} ->
-        send(from, n + 1)
-        loop(n + 1)
-      {:get, from} ->
-        send(from, n)
-        loop(n)
-      {:set, value, from} ->
-        send(from, :ok)
-        loop(value)
-    end
-  end
   #################################
   def start_link do GenServer.start_link(__MODULE__, :ok, name: __MODULE__) end
 	def get(n) do GenServer.call(__MODULE__, {:print, n}) end
