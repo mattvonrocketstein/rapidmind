@@ -1,8 +1,9 @@
 defmodule State do
   def new do
-    {:ok, agent} = Agent.start_link fn -> %{} end
+    {:ok, agent} = Agent.start_link(fn -> %{} end, name: __MODULE__)
     agent
   end 
+
   def put(agent, k, v) do
     Agent.update(agent, fn map -> Map.put(map, k, v) end)
   end

@@ -12,6 +12,12 @@ defmodule Helpers do
       end
   end
 
+  def write_to_mongo(connection_string, result) do
+    [host, port] = String.split(connection_string, ":")
+    mongo = Mongo.connect!(host, port)
+    IO.puts "not implemented yet"
+  end
+
   def string_to_regex(x) do elem(Regex.compile(x), 1) end
   
   def extract_links_and_comments(body) do

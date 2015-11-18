@@ -44,6 +44,7 @@ defmodule Rasp do
     record = State.new
     State.put(record, :input, %{:options => options})
     State.put(record, :output, %{})
+    State.put(record, :pids, [])
     cond do
       options[:help] ->
         process(:help)
@@ -60,7 +61,15 @@ defmodule Rasp do
       end
   end
   
-
+  def wait_on(record, []) do
+    IO.puts "all pids finished now"
+    #IEx.pry
+  end
+  
+  def wait_on(record, pids) do
+    wait_on(record, Enum.filter(pids, fn pid->Process.alive?(pid) end) )
+  end
+  
   def crawler(record) do
     input = State.get(record, :input)
     #options = Dict.get(input, :options)
@@ -73,12 +82,18 @@ defmodule Rasp do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         #4..6 |> Enum.map(&FizzBuzz.print/1)
         links_and_comments = Helpers.extract_links_and_comments(body)
-        |>Enum.slice(0,2)
-        out = Enum.map(
+        #|>Enum.slice(0,2)
+        #out = 
+        Enum.map(
           links_and_comments, 
-          fn {url, comments} -> get_page({source, comments, url}, record) 
-        end)
-        out = Enum.filter(out, fn(x)->x end)
+          fn {url, comments} -> 
+            #pid = spawn fn -> get_page({source, comments, url}, record)  end
+            #State.put(record, :pids, [pid | State.get(record, :pids)])
+            get_page({source, comments, url}, record) 
+          end
+        )
+        #out = Enum.filter(out, fn(x)->x end)
+        wait_on(record, State.get(record, :pids))
         post_process(record)
 
       {:ok, %HTTPoison.Response{status_code: 404}} ->
@@ -94,28 +109,23 @@ defmodule Rasp do
 
   def post_process(record) do
     cleaned_output = State.get(record, :output) 
-    urls = Dict.keys(cleaned_output)
-    vals = Enum.map(
-      Dict.values(cleaned_output),
-      fn x -> Dict.delete(x, :body) end)
-    cleaned_output = Enum.zip(urls, vals)
+    cleaned_output = Enum.zip(
+      # urls
+      Dict.keys(cleaned_output), 
+      # url-info-items
+      Enum.map(
+        Dict.values(cleaned_output),
+        fn x -> Dict.delete(x, :body) end))
     cleaned_output = Enum.into(cleaned_output, %{})
-    IEx.pry
     ap cleaned_output
     options = Map.get(State.get(record, :input), :options)
     cond do
       #options[:json] ->
       options[:mongo] ->
-        write_to_mongo(options[:mongo], cleaned_output)
+        Helpers.write_to_mongo(options[:mongo], cleaned_output)
       true ->
         :ok
     end
-  end
-
-  def write_to_mongo(connection_string, result) do
-    [host, port] = String.split(connection_string, ":")
-    mongo = Mongo.connect!(host, port)
-    IO.puts "not implemented yet"
   end
 
   def match_page(body, regex_rule) do
@@ -143,6 +153,12 @@ defmodule Rasp do
   end
 
   def get_page({source, comments, url}, record) do
+    if String.at(url,0)=="/" do
+      IO.puts "Ignoring #{url} since it's relative"
+      #almost works but makes strings like
+      #http://www.reddit.com/r/python/r/Python/comments/3t8fgn/help_interget_input_and_print_problem/
+      #url = source <> url 
+    end
     IO.puts url
     output = State.get(record, :output)
     case HTTPoison.get(url, [], [follow_redirect: true]) do
