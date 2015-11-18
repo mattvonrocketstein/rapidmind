@@ -13,7 +13,6 @@ defmodule Rasp do
   end
 
   def main(args) do
-    HTTPoison.start
     args |> parse_args |> process
   end
 
@@ -41,10 +40,10 @@ defmodule Rasp do
   end
 
   def process(options) do
-    record = State.new
-    State.put(record, :input, %{:options => options})
-    State.put(record, :output, %{})
-    State.put(record, :pids, [])
+    {:ok, record} = State.start_link
+    State.put(:input, %{:options => options})
+    State.put(:output, %{})
+    State.put(:pids, [])
     cond do
       options[:help] ->
         process(:help)
@@ -61,40 +60,42 @@ defmodule Rasp do
       end
   end
   
-  def wait_on(record, []) do
-    IO.puts "all pids finished now"
-    #IEx.pry
-  end
-  
-  def wait_on(record, pids) do
-    wait_on(record, Enum.filter(pids, fn pid->Process.alive?(pid) end) )
-  end
-  
   def crawler(record) do
-    input = State.get(record, :input)
+    HTTPoison.start
+    input = State.get( :input)
     #options = Dict.get(input, :options)
     reddit = input[:options][:reddit]
     rules_file = input[:options][:rules]
     source = "https://www.reddit.com/r/#{reddit}"
     ap "Scanning subreddit: #{source}"
-    State.put(record, :input, Map.put(input, :rules, Helpers.read_config_file(rules_file)))
+    State.put( :input, Map.put(input, :rules, Helpers.read_config_file(rules_file)))
     case HTTPoison.get(source) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         #4..6 |> Enum.map(&FizzBuzz.print/1)
         links_and_comments = Helpers.extract_links_and_comments(body)
-        #|>Enum.slice(0,2)
+        |>Enum.slice(0,2)
         #out = 
         Enum.map(
           links_and_comments, 
-          fn {url, comments} -> 
-            #pid = spawn fn -> get_page({source, comments, url}, record)  end
-            #State.put(record, :pids, [pid | State.get(record, :pids)])
-            get_page({source, comments, url}, record) 
+          fn {url, comments} ->
+            cond do
+              String.at(url,0)=="/" ->
+                url=comments
+                #IO.puts "Ignoring #{url} since it's relative"
+                #almost works but makes strings like
+                #http://www.reddit.com/r/python/r/Python/comments/3t8fgn/help_interget_input_and_print_problem/
+                #url = source <> url 
+              true ->
+                :ok
+            end
+            pid = spawn_link fn -> get_page({source, comments, url}, record)  end
+            State.put( :pids, [pid | State.get( :pids)])
+            #get_page({source, comments, url}, record) 
           end
         )
         #out = Enum.filter(out, fn(x)->x end)
-        wait_on(record, State.get(record, :pids))
-        post_process(record)
+        State.wait_on(State.get( :pids))
+        post_process()
 
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         :ok #print "#{url}: Not found :("
@@ -107,22 +108,18 @@ defmodule Rasp do
     end
   end
 
-  def post_process(record) do
-    cleaned_output = State.get(record, :output) 
-    cleaned_output = Enum.zip(
-      # urls
-      Dict.keys(cleaned_output), 
-      # url-info-items
-      Enum.map(
-        Dict.values(cleaned_output),
-        fn x -> Dict.delete(x, :body) end))
-    cleaned_output = Enum.into(cleaned_output, %{})
-    ap cleaned_output
-    options = Map.get(State.get(record, :input), :options)
+  def post_process() do
+    cleaned_output = State.get()
+    |>Dict.drop([:input,:output,:pids])
+    |>Dict.keys()
+    |>Enum.map(fn x->Dict.delete(State.get(x),:body) end)
+    Apex.ap cleaned_output
+    options = Map.get(State.get( :input), :options)
     cond do
       #options[:json] ->
       options[:mongo] ->
-        Helpers.write_to_mongo(options[:mongo], cleaned_output)
+        #Helpers.write_to_mongo(options[:mongo], %{}cleaned_output)
+        :ok
       true ->
         :ok
     end
@@ -137,30 +134,28 @@ defmodule Rasp do
     if struct[:match] do struct[:string] end
   end
 
-  def process_page(url, record) do
-    output = State.get(record, :output)
-    url_record = output[url]
-    rules = State.get(record, :input)[:rules]
-    match_list = Enum.map(rules, fn(rule) -> match_page(url_record[:body], rule) end )
+  def process_page(url) do
+    #output = State.get(:output)
+    #url_record = output[url]
+    #Apex.ap url_record
+    rules = State.get(:input)[:rules]
+    match_list = Enum.map(rules, fn(rule) -> match_page(State.get(url)[:body], rule) end )
     match_list = Enum.filter(match_list, fn(x)-> x end )
     if ! Enum.empty?(match_list) do
-      output = State.get(record, :output)
-      item_info = Dict.get(output, url)
-      item_info = Dict.put(item_info, :matches, match_list)
-      output = Dict.put(output, url, item_info)
-      State.put(record, :output, output)
+      #output = State.get( :output)
+      #item_info = Dict.get(output, url)
+      #item_info = Dict.put(url_record, :matches, match_list)
+      item_info = State.get(url)
+      State.put(url, Dict.put(item_info,:matches,match_list))
+      #output = State.put_output(url, item_info)
+      #State.put( :output, output)
     end
   end
 
   def get_page({source, comments, url}, record) do
-    if String.at(url,0)=="/" do
-      IO.puts "Ignoring #{url} since it's relative"
-      #almost works but makes strings like
-      #http://www.reddit.com/r/python/r/Python/comments/3t8fgn/help_interget_input_and_print_problem/
-      #url = source <> url 
-    end
+    HTTPoison.start # don't move
     IO.puts url
-    output = State.get(record, :output)
+    output = State.get( :output)
     case HTTPoison.get(url, [], [follow_redirect: true]) do
      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         item_data = %{
@@ -168,9 +163,9 @@ defmodule Rasp do
           :source=>source, 
           :comments=>comments 
         }
-        output = Map.put(output, url, item_data)
-        State.put(record, :output, output)
-        process_page(url, record)
+        State.put(url, item_data)
+        #State.put(:output, output)
+        process_page(url)
      {:ok, %HTTPoison.Response{status_code: 404}} ->
        IO.puts ".. #{url}: Not found :("
      {:error, %HTTPoison.Error{reason: reason}} ->

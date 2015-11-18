@@ -1,16 +1,40 @@
 defmodule State do
-  def new do
-    {:ok, agent} = Agent.start_link(fn -> %{} end, name: __MODULE__)
-    agent
+  def start_link do
+    Agent.start_link(fn -> %{} end, name: __MODULE__)
   end 
-
-  def put(agent, k, v) do
-    Agent.update(agent, fn map -> Map.put(map, k, v) end)
+  def wait_on([]) do
+    IO.puts "all pids finished now"
   end
-  def get(agent, k) do
-    Agent.get(agent, fn map -> Map.get(map, k) end)
+  def wait_on(pids) do
+    wait_on(Enum.filter(pids, fn pid->Process.alive?(pid) end) )
   end
-  def stop(agent) do Agent.stop(agent) end
+  def keys() do
+    Agent.get(__MODULE__, fn map -> Map.keys(map) end)
+  end
+  def put(k, v) do
+    IO.puts "#{__MODULE__} put"
+    Agent.update(__MODULE__, fn map -> 
+      zult = Map.put(map, k, v) 
+      Apex.ap zult
+      #IO.puts("zult #{inspect Dict.keys(zult)}")
+      zult
+    end)
+    #Agent.update(__MODULE__, &Map.put(&1, k, v))
+  end
+  def put_output(k,v) do
+    Agent.update(__MODULE__, fn map -> 
+      output = Map.get(map, :output)
+      Map.put(output, k, v)
+      Map.put(map, :output, output)
+    end)
+  end 
+  def get() do
+    Agent.get(__MODULE__, fn map -> map end)
+  end
+  def get(k) do
+    Agent.get(__MODULE__, fn map -> Map.get(map, k) end)
+  end
+  def stop() do Agent.stop(__MODULE__) end
 end
 
 defmodule FizzBuzz do
