@@ -1,10 +1,32 @@
-[
-	"python",
-	"pypi",
-	"elixir",
-	"phoenix",
-	"haskell",
-	"fabric",
-	"puppet",
-	"mathematics"
-]
+{
+	"reddits": {
+		"python": {
+			"keywords": [
+				"async", "devops", "elixir", "erlang",
+				"flask", "haskell", 
+				"pypi"
+			]
+		},
+		"elixir": {
+			"keywords": [
+				"agent", "phoenix", "devops"
+			]
+		},
+		"programming": { 
+			"keywords": [
+				"agent", "crypto", "devops",
+				"fabric", "haskell",
+				"mathematics", 
+				"phoenix", "puppet"
+			]		
+		},
+		"devops": { 
+			"keywords": [
+				"agent", "crypto", "devops",
+				"fabric", "haskell",
+				"mathematics", 
+				"phoenix", "puppet"
+			]			
+		}
+	}
+}

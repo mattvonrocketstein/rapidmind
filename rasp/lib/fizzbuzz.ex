@@ -12,14 +12,9 @@ defmodule State do
     Agent.get(__MODULE__, fn map -> Map.keys(map) end)
   end
   def put(k, v) do
-    IO.puts "#{__MODULE__} put"
     Agent.update(__MODULE__, fn map -> 
-      zult = Map.put(map, k, v) 
-      Apex.ap zult
-      #IO.puts("zult #{inspect Dict.keys(zult)}")
-      zult
+      Map.put(map, k, v) 
     end)
-    #Agent.update(__MODULE__, &Map.put(&1, k, v))
   end
   def put_output(k,v) do
     Agent.update(__MODULE__, fn map -> 

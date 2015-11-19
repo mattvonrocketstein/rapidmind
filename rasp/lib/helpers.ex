@@ -1,17 +1,5 @@
 defmodule Helpers do
 
-  defmacro print(thing) do
-      if String.valid?(thing) do
-          quote bind_quoted: binding() do
-           IO.puts thing
-          end
-      else
-         quote bind_quoted: binding() do
-           IO.puts("#{inspect thing}")
-          end
-      end
-  end
-
   def write_to_mongo(connection_string, result) do
     [host, port] = String.split(connection_string, ":")
     mongo = Mongo.connect!(host, port)
@@ -31,9 +19,12 @@ defmodule Helpers do
   def read_config_file(rules_file) do
     {:ok, body} = File.read(rules_file)
     result = Poison.Parser.parse!(body)
-    num_rules = Enum.count(result)
-    tmp = Enum.join(result,",")
-    print "Read #{num_rules} rules: #{tmp}"
+    #subreddits = result["reddits"] |> Dict.keys()
+    subreddits = result
+    |> Dict.get("reddits")
+    |> Dict.keys()
+    num_reddits = subreddits |> Enum.count()
+    IO.puts "Crawling #{num_reddits} subreddits: #{Enum.join(subreddits, ",")}"
     result
   end
 end

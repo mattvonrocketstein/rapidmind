@@ -25,6 +25,7 @@ defmodule Rasp.Mixfile do
         { :httpoison, "~> 0.8.0"},
         { :poison, "~> 1.5"},
         { :apex, "~>0.3.2"},
+        { :ex_json_schema, "~> 0.3.0"}
     ]
   end
 
