@@ -22,6 +22,8 @@ defmodule Rasp.Mixfile do
     [
         { :floki, git: "https://github.com/philss/floki.git", tag: "v0.7.0" },
         { :mongo, git: "https://github.com/checkiz/elixir-mongo.git", tag: "0.5.2" },
+        # see https://github.com/edgurgel/httpoison/issues/62
+        { :hackney, github: "benoitc/hackney", tag: "1.3.0", override: true},
         { :httpoison, "~> 0.8.0"},
         { :poison, "~> 1.5"},
         { :apex, "~>0.3.2"},

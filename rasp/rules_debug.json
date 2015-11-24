@@ -1,0 +1,19 @@
+{
+	"reddits": {
+		"python": {
+			"keywords": [
+				"async", "devops", "elixir", "erlang",
+				"flask", "haskell", 
+				"pypi"
+			]
+		},
+		"devops": { 
+			"keywords": [
+				"agent", "crypto", "devops",
+				"fabric", "haskell",
+				"mathematics", 
+				"phoenix", "puppet"
+			]			
+		}
+	}
+}

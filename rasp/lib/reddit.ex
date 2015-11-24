@@ -27,6 +27,7 @@ defmodule Reddit do
 
             pid = spawn_link fn -> WebPage.download(item_info)  end
             State.put( :pids, [pid | State.get( :pids)])
+            pid
             #get_page({source, comments, url}, record)
           end
         )

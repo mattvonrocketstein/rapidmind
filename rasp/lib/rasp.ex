@@ -11,7 +11,8 @@ defmodule Rasp do
   def start(_type, _args) do Rasp.Supervisor.start_link end
 
   def main(args) do args |> parse_args |> process end
-
+  
+  @spec parse_args(Array) :: Map
   def parse_args(args) do
     switches = [
       help:   :boolean,
@@ -22,6 +23,7 @@ defmodule Rasp do
   end
 
   def process([]) do IO.puts "Incorrect usage (use --help for help)" end
+  
   def process(:help) do
     IO.puts """
       Usage:
@@ -35,7 +37,7 @@ defmodule Rasp do
   end
 
   def process(options) do
-    {:ok, record} = State.start_link
+    {:ok, record} = State.start_link(options)
     State.put(:input, %{:options => options})
     State.put(:output, %{})
     State.put(:pids, [])
@@ -44,16 +46,15 @@ defmodule Rasp do
         process(:help)
 
       options[:rules] ->
-        config_json = Helpers.read_config_file(options[:rules])
-        #State.put( :input, Map.put(input, :rules, config_json))
-        reddits_config_json = config_json|>Dict.get("reddits")
-        subreddits = reddits_config_json |> Dict.keys()
+        {:ok, pid} = Config.start_link(options[:rules])
+        subreddits = Config.subreddits()
         #|> Enum.slice(0, 1)
-        processed_subreddits = subreddits
+        pids = subreddits
         |> Enum.map(fn subreddit_name ->
-            subreddit_config = Dict.get(reddits_config_json, subreddit_name)
+            subreddit_config = Config.get_subreddit_config(subreddit_name)
             Reddit.crawl_one_sub(subreddit_name, subreddit_config)
           end)
+        IO.puts "Waiting on: #{Enum.count(pids)}"
         State.wait_on(State.get(:pids))
         post_process()
 
@@ -67,11 +68,11 @@ defmodule Rasp do
     # and unset `body` / `rules` items from the struct
     # (processing is finished now so they are no longer used)
     cleaned_output = State.get()
-    |>Dict.drop([:input, :output, :pids])
+    |>Dict.drop([:input, :options, :output, :pids])
     |>Dict.keys()
     |>Enum.map(
-        fn x->
-          %{%{State.get(x)|body: nil}|rules: nil}
+        fn x ->
+          State.get(x)|>Map.drop([:body, :rules])
         end)
     |>Enum.filter(fn x -> !Enum.empty?(x.matches) end)
     State.put(:output, cleaned_output)
