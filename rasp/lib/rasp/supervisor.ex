@@ -9,10 +9,10 @@ defmodule Rasp.Supervisor do
     children = [
       # Define workers and child supervisors to be supervised.  
       # similar effect as to FizzBuzz.start_link
-      worker(   
-        FizzBuzz, #server module
-        []        # args
-      ) 
+      #worker(   
+      #  FizzBuzz, #server module
+      #  []        # args
+      #) 
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
