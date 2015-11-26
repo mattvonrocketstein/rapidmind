@@ -1,8 +1,28 @@
-## ABOUT
+## About
 
-My first humble elixir project.
+This is my first humble elixir project.
 
-`rasp` is a command line scraper that scans subreddits for interesting content.
+`rasp` is a command line scraper that scans webpages for interesting content.  It works with any webpage but has separate configuration options specifically for scanning subreddits.
+
+
+##Usage
+
+First if your interests are different than mine (and they probably are) change `rules.json` to mention stuff that interests you.  Next you'll need elixir (that's `brew install elixir` on OSX or `sudo apt-get install elixir` on ubuntu).
+
+To compile the command line program, run:
+
+```shell
+    $ mix deps.get
+    $ mix escript.build
+```
+
+Invoke it with the required arguments like this:
+
+```shell
+    $ ./rasp --rules=rules.json
+```
+
+## Configuration Schema
 
 Rasp works like this:
 
@@ -10,26 +30,23 @@ Rasp works like this:
 2. download all pages mentioned in the top links for that subreddit
 3. parse those pages for regexes mentioned in `rules.json`
 
-##USAGE
+Example configuration schema is found below
 
-First if your interests are different than mine (and they probably are) change `rules.json` to mention stuff that interests you.  Next you'll need elixir (that's `brew install elixir` on OSX or `sudo apt-get install elixir` on ubuntu).
+```json
+    {}
+```
+##Running Tests, and Static Analysis
 
-To compile the command line program, run:
+```shell
+    $ mix test
+```
 
-    $ mix deps.get
-    $ mix escript.build
+##Todo
 
-Invoke it with the required arguments like this:
-
-    $ ./rasp --reddit=programming --rules=rules.json
-
-##TODO
-
-* Async downloads
 * Optionally dump data into mongo
 * Daemonify and mess around with hot swapping
 
-##REFERENCES
+##References
 
 ### Libs
 * HTML parsing via [Floki](https://github.com/philss/floki)
