@@ -6,11 +6,8 @@ defmodule PidList do
   @spec join(Enum) :: any
   def join(pids) do
     IO.puts "Waiting on: #{Enum.count(pids)}"
-    join(pids, :helper)
-  end
-  def join(pids, :helper) do
     pids = pids|>Enum.filter(fn pid->Process.alive?(pid) end)
-    join(pids, :helper)
+    join(pids)
   end  
 end
 

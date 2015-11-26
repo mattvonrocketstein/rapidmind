@@ -12,10 +12,11 @@ defmodule Rasp do
 
   def main(args) do args |> parse_args |> process end
   
-  @spec parse_args(Array) :: Map
+  @spec parse_args(Enum) :: Map
   def parse_args(args) do
     switches = [
       help:   :boolean,
+      debug:  :boolean,
       reddit: :string,
       rules:  :string ]
     {options, _, _} = OptionParser.parse(args, switches: switches)
@@ -48,15 +49,15 @@ defmodule Rasp do
       options[:rules] ->
         {:ok, pid} = Config.start_link(options[:rules])
         subreddits = Config.subreddits()
-        #|> Enum.slice(0, 1)
+        if options[:debug] do 
+          IO.puts "limiting requests since --debug is true"
+          subreddits = subreddits|> Enum.slice(0, 1)
+        end
         pids = subreddits
-        |> Enum.map(fn subreddit_name ->
-            subreddit_config = Config.get_subreddit_config(subreddit_name)
-            Reddit.crawl_one_sub(subreddit_name, subreddit_config)
-          end)
-        IO.puts "Waiting on: #{Enum.count(pids)}"
-        State.wait_on(State.get(:pids))
-        post_process()
+        |> Enum.map(&Reddit.crawl_one_sub/1)
+        |> List.flatten
+        |> PidList.join
+        #post_process()
 
       true ->
         process([])
@@ -71,10 +72,11 @@ defmodule Rasp do
     |>Dict.drop([:input, :options, :output, :pids])
     |>Dict.keys()
     |>Enum.map(
-        fn x ->
-          State.get(x)|>Map.drop([:body, :rules])
+        fn url ->
+          webpage = State.get(url) 
+          if webpage do WebPage.clean(webpage) end
         end)
-    |>Enum.filter(fn x -> !Enum.empty?(x.matches) end)
+    |>Enum.filter(fn webpage -> webpage && !Enum.empty?(webpage.matches) end)
     State.put(:output, cleaned_output)
     Apex.ap cleaned_output
     options = Map.get(State.get(:input), :options)
