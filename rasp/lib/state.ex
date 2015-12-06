@@ -1,26 +1,12 @@
-defmodule PidList do
-  def join([]) do
-    IO.puts "all pids finished now"
-  end
-  
-  @spec join(Enum) :: any
-  def join(pids) do
-    IO.puts "Waiting on: #{Enum.count(pids)}"
-    pids = pids|>Enum.filter(fn pid->Process.alive?(pid) end)
-    join(pids)
-  end  
-end
-
 defmodule State do
   require Apex
   def start_link(options) do
     Agent.start_link(
       fn -> 
         %{
-          :input => %{},
+          :input   => %{},
+          :output  => %{},
           :options => options,
-          :output => %{},
-          :pids => []
          } 
       end, 
       name: __MODULE__)

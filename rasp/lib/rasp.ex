@@ -5,6 +5,7 @@ defmodule Rasp do
   @moduledoc """
   Things and stuff.....
   """
+
   use Application
   import Apex
 
@@ -13,7 +14,7 @@ defmodule Rasp do
   def main(args) do args |> parse_args |> process end
   
   @spec parse_args(Enum) :: Map
-  def parse_args(args) do
+  defp parse_args(args) do
     switches = [
       help:   :boolean,
       debug:  :boolean,
@@ -23,68 +24,76 @@ defmodule Rasp do
     options
   end
 
-  def process([]) do IO.puts "Incorrect usage (use --help for help)" end
+  @spec process(Enum) :: any
+  defp process([]) do IO.puts "Incorrect usage (use --help for help)" end
   
-  def process(:help) do
+  @spec process(any) :: any
+  defp process(:help) do
     IO.puts """
       Usage:
-
-        ./rasp --rules [rules]
+        rasp --rules [rules_file]
 
       Options:
         --rules  specify rules to use (a file containing JSON)
         --help   Show this help message
     """
   end
+  
+  defp process(:rules) do
+    rules = State.get(:input)[:options][:rules]
+    debug = State.get(:input)[:options][:debug]
+    {:ok, pid} = Config.start_link(rules)
+    subreddits = Config.subreddits()
+    pages = Config.pages()
+    if debug do 
+      IO.puts "limiting requests since --debug is true"
+      subreddits = subreddits |> Enum.slice(0, 1)
+      pages = pages |> Enum.slice(0, 1)
+    end
 
-  def process(options) do
+    pids = pages
+    |> Enum.map(&WebPage.select_and_match/1)
+    |> List.flatten
+    |> PidList.join
+
+    pids = subreddits
+    |> Enum.map(&Reddit.crawl_one_sub/1)
+    |> List.flatten
+    |> PidList.join
+
+    State.get()
+    |>Dict.drop([:input, :options, :output])
+    |>post_process()
+  end 
+  defp process(options) do
     {:ok, record} = State.start_link(options)
-    State.put(:input, %{:options => options})
     State.put(:output, %{})
-    State.put(:pids, [])
+    State.put(:input, %{:options => options})
     cond do
-      options[:help] ->
-        process(:help)
-
-      options[:rules] ->
-        {:ok, pid} = Config.start_link(options[:rules])
-        subreddits = Config.subreddits()
-        if options[:debug] do 
-          IO.puts "limiting requests since --debug is true"
-          subreddits = subreddits|> Enum.slice(0, 1)
-        end
-        pids = subreddits
-        |> Enum.map(&Reddit.crawl_one_sub/1)
-        |> List.flatten
-        |> PidList.join
-        #post_process()
-
-      true ->
-        process([])
+      options[:help]  -> process(:help)
+      options[:rules] -> process(:rules) 
+      true            -> process([])
       end
   end
 
-  def post_process() do
-    # remove everything except the keys which are urls,
+  defp post_process(data_so_far) do
+    options = State.get(:input)[:options]
     # and unset `body` / `rules` items from the struct
     # (processing is finished now so they are no longer used)
-    cleaned_output = State.get()
-    |>Dict.drop([:input, :options, :output, :pids])
+    cleaned_output = data_so_far
     |>Dict.keys()
     |>Enum.map(
         fn url ->
-          webpage = State.get(url) 
+          webpage = State.get(url)
           if webpage do WebPage.clean(webpage) end
         end)
     |>Enum.filter(fn webpage -> webpage && !Enum.empty?(webpage.matches) end)
     State.put(:output, cleaned_output)
     Apex.ap cleaned_output
-    options = Map.get(State.get(:input), :options)
     cond do
-      options[:mongo] ->
-        #Helpers.write_to_mongo(options[:mongo], %{}cleaned_output)
-        :ok
-      true -> :ok
+      options[:mongo] -> :ok
+      true            -> :ok
+      #Helpers.write_to_mongo(options[:mongo], %{}cleaned_output)
     end
   end
 end

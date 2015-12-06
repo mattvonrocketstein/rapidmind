@@ -1,3 +1,16 @@
+defmodule PidList do
+  def join([]) do
+    IO.puts "all pids finished now"
+  end
+  
+  @spec join(Enum) :: any
+  def join(pids) do
+    #IO.puts "Waiting on: #{Enum.count(pids)}"
+    pids = pids|>Enum.filter(fn pid->Process.alive?(pid) end)
+    join(pids)
+  end  
+end
+
 defmodule RegexList do
   @moduledoc """
 
@@ -7,7 +20,7 @@ defmodule RegexList do
   
   """
   @spec string_to_regex(String) :: Regex
-  def string_to_regex(x) do elem(Regex.compile(x), 1) end
+  defp string_to_regex(x) do elem(Regex.compile(x), 1) end
   
   @spec all_matches(List, String) :: List
   def all_matches(regex_list, string) do
@@ -18,36 +31,6 @@ defmodule RegexList do
         match && regex_string
       end)
     match_list = match_list |> Enum.filter(fn(x)-> x end )
-  end
-end
-
-defmodule Config do
-  def start_link(rules_file) do
-    Agent.start_link(
-      fn -> 
-        {:ok, body} = File.read(rules_file)
-        result = Poison.Parser.parse!(body)
-        subreddits = result
-        |> Dict.get("reddits")
-        |> Dict.keys()
-        num_reddits = subreddits |> Enum.count()
-        IO.puts "Crawling #{num_reddits} subreddits: #{Enum.join(subreddits, ",")}"
-        result
-      end, 
-      name: __MODULE__)
-  end
-  
-  def get_subreddit_config(subreddit_name) do
-    Config.reddits() |> Dict.get(subreddit_name)
-  end
-  def get() do
-    Agent.get(__MODULE__, fn map -> map end)
-  end
-  def reddits() do
-    Config.get()|>Dict.get("reddits")
-  end  
-  def subreddits() do
-    Config.reddits() |> Dict.keys()
   end
 end
 

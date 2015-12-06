@@ -1,6 +1,8 @@
 defmodule Reddit do
-  def download(url) do
-  end
+    @moduledoc """
+      Things and stuff.....
+    """  
+  
   @spec extract_links_and_comments(String) :: Enum
   def extract_links_and_comments(body) do
     # returns [ [link_url, comment_url], .. ]
@@ -34,7 +36,6 @@ defmodule Reddit do
               source: source,
               comments: comments}
             pid = spawn_link fn -> WebPage.download(webpage)  end
-            State.put( :pids, [pid | State.get( :pids)])
             pid
           end
         )

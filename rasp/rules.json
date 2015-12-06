@@ -1,32 +1,18 @@
 {
+	"pages": {
+		"piratebay": {
+			"url": "https://thepiratebay.gd/top/205",
+			"select": [".detLink"],
+			"match": ["S06E04"]
+		}
+	},
 	"reddits": {
-		"python": {
+		"elixir": {
 			"keywords": [
-				"async", "devops", "elixir", "erlang",
+				"elixir", "erlang",
 				"flask", "haskell", 
 				"pypi"
 			]
-		},
-		"elixir": {
-			"keywords": [
-				"agent", "phoenix", "devops"
-			]
-		},
-		"programming": { 
-			"keywords": [
-				"agent", "crypto", "devops",
-				"fabric", "haskell",
-				"mathematics", 
-				"phoenix", "puppet"
-			]		
-		},
-		"devops": { 
-			"keywords": [
-				"agent", "crypto", "devops",
-				"fabric", "haskell",
-				"mathematics", 
-				"phoenix", "puppet"
-			]			
 		}
 	}
 }

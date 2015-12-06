@@ -1,28 +1,40 @@
 
   defmodule WebPage do
+    @moduledoc """
+      Things and stuff.....
+    """  
     defstruct [
       {:url, ""},       # ::url::      base URL for the page
       {:comments, ""},  # ::comments:: a comment URL if relevant (probably only reddit)
       {:source, ""},    # ::source::   the URL we got this URL from, if relevant
       {:body, ""},      # ::body::     page contents (empty before download and deleted after it's used)
       {:matches, []},   # ::matches::  regexes that matched this page
-      {:rules, []}      # ::rules::    regexes used to test this page
+      {:rules, []},     # ::rules::    regexes used to test this page
+      {:select, []}     # ::select::   Floki selectors diminish the part of the page we're matching against
     ]
-    
+    def select_and_match(
+      {nickname, %{"match" => match_list, "url" => url, "select" => select_list}}) do
+      IO.puts("Select and match for \"#{nickname}\"")
+      webpage = %WebPage{:url => url, :rules => match_list, :select => select_list}
+      pid = spawn_link fn -> WebPage.download(webpage)  end
+      pid
+    end
     @spec clean(WebPage) :: WebPage
     def clean(webpage) do 
-      IO.puts "#{inspect webpage}"
-      if Map.has_key?(webpage, :body) do
-        webpage = webpage|>Map.delete(:body)
-      end
-      if Map.has_key?(webpage, :rules) do
-        webpage = webpage|>Map.delete(:rules)
-      end
-      if Map.has_key?(webpage,:url) && 
-         Map.has_key?(webpage,:comments) && 
+      #IO.puts "#{inspect webpage}"
+      Enum.map(
+        [:body, :rules, :select],
+        fn x -> 
+          if Map.has_key?(webpage, x) do
+            webpage = webpage |> Map.delete(x)
+          end
+        end)
+      if Map.has_key?(webpage, :url) && 
+         Map.has_key?(webpage, :comments) && 
          webpage.url == webpage.comments do
           webpage = webpage|>Map.drop([:comments])
       end
+      webpage
     end
 
     def download(item_info) do
@@ -31,6 +43,15 @@
       #output = State.get(:output)
       case HTTPoison.get(item_info.url, [], [follow_redirect: true, hackney: [:insecure]]) do
        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+          if item_info.select do 
+            selections = Enum.map(
+              item_info.select, 
+              fn x -> 
+                Floki.find(body, x)
+                |> Enum.map(&Floki.raw_html/1)
+              end)
+            body = Enum.join(selections, "\n")
+          end
           item_info = %{item_info|body: body}
           #State.put(item_info.url, item_info)
           State.put(item_info.url, process_page(item_info))
@@ -47,7 +68,7 @@
       end
     end
     
-    @spec process_page(WebPage) :: WebPage
+    #@spec process_page(#{}) :: #{}
     def process_page(item_info) do
       match_list = item_info.rules|>RegexList.all_matches(item_info.body)
       #match_list = item_info.rules|>Enum.map(fn(rule) -> match_page(item_info.body, rule) end )
@@ -58,3 +79,11 @@
       end
     end
   end # end webpage
+
+
+
+
+
+
+
+
