@@ -1,7 +1,7 @@
-Saxy
-====
 
-An example using [Erlsom](https://github.com/willemdj/erlsom) (an XML parser for Erlang) to parse a XML file. In my case, a 50 GB [Wikipedia XML dump](http://meta.wikimedia.org/wiki/Data_dump_torrents).
+## Load Wikipedia dumps into Neo4j with Elixir
+
+XML parsing based on original work [here](https://github.com/benjamintanweihao/saxy).
 
 ## Running it
 
