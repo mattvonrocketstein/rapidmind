@@ -37,10 +37,6 @@ defmodule Saxy do
     %{state | element_acc: ""}
   end
 
-  def sax_event_handler({:characters, value}, %SaxState{element_acc: element_acc} = state) do
-    %{state | element_acc: element_acc <> to_string(value)}
-  end
-
   def sax_event_handler({:endElement, _, 'title', _}, state) do
     %{state | title: state.element_acc}
   end
@@ -62,8 +58,12 @@ defmodule Saxy do
       true ->
         nil
     end
+    IO.puts("Total links out: #{count}")
     state
     #IO.puts "Text:  #{state.text}"
+  end
+  def sax_event_handler({:characters, value}, %SaxState{element_acc: element_acc} = state) do
+    %{state | element_acc: element_acc <> to_string(value)}
   end
   def skip?(state) do
     String.starts_with?(state.title, "Talk:") or
@@ -71,7 +71,10 @@ defmodule Saxy do
     String.starts_with?(state.title, "Wikipedia") or
     String.starts_with?(state.title, "Help")
   end
-  def sax_event_handler(:endDocument, state), do: state
-  def sax_event_handler(_, state), do: state
-
+  def sax_event_handler(:endDocument, state) do
+    state
+  end
+  def sax_event_handler(_, state) do
+     state
+  end
 end

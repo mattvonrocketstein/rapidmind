@@ -1,0 +1,14 @@
+-   repo: /home/vagrant/code/pre-commit-hooks
+    sha: 7b89129977e79ba651cda7755f015086afcdfb97
+    hooks:
+      -   id: mix-escript
+      -   id: mix-dogma
+      -   id: mix-compile
+      -   id: mix-test
+-   repo: local
+    hooks:
+    -   id: mix_test
+        name: 'Elixer: mixing tests'
+        entry: mix test
+        language: system
+        files: \.ex$
