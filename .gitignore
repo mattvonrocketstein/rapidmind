@@ -1,8 +1,7 @@
 */_build
-*/deps
+*/deps/*
 *.ez
 */erl_crash.dump
 *.ez
 rasp/rasp
 .#*
-*/mix.lock
