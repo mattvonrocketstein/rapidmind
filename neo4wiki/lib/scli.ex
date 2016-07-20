@@ -27,7 +27,7 @@ defmodule Saxy.CommandLine do
   """
   def main(args) do
       args |> parse_args |> process
-      main_loop()
+      #main_loop()
   end
 
   @doc """
@@ -93,6 +93,7 @@ defmodule WikiParser do
           sstart(start_type, mix_env)
       end
   end
+
   # function-header, so no do/ends are needed
   def sstart(mix_env_or_mode, args \\ [])
 
@@ -106,21 +107,10 @@ defmodule WikiParser do
 
   @doc """
   """
-  def sstart(:dev, start_args) do
-    Application.ensure_all_started(:quantum)
-    Application.ensure_all_started(:erlcloud)
-    Application.ensure_all_started(:logger)
-    starter(
-      [
-        #supervisor(HostTable, start_args),
-        #supervisor(HostMon, [])
-        ])
-  end
-
-  @doc """
-  """
   def sstart(:cli, config_file) do
     IO.puts("CLI entry: #{config_file}")
-    sstart(:dev, [config_file])
+    Application.ensure_all_started(:logger)
+    Application.ensure_all_started(:neo4j_sips_models)
+    Saxy.run(config_file)
   end
 end
