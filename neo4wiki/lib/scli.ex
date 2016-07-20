@@ -1,3 +1,4 @@
+
 defmodule Common do
   @spec user_msg(String) :: any
   def user_msg(msg) do
@@ -34,7 +35,9 @@ defmodule Saxy.CommandLine do
   """
   def parse_args(args) do
       {options, _, _} = OptionParser.parse(args,
-        switches: [file: :string])
+        switches: [
+          file: :string,
+          wipedb: :boolean])
       options
   end
 
@@ -49,29 +52,27 @@ defmodule Saxy.CommandLine do
   """
   def process(options) do
     cond do
-      options[:file] == nil ->
-        IO.puts("--file was not passed")
+      options[:file] == nil and options[:wipedb]==nil ->
+        IO.puts("no arguments given")
         System.halt(1)
-      true ->
+      options[:file] ->
         IO.puts("escript commandline entry")
         WikiParser.start(:cli, [options[:file]])
+      options[:wipedb] ->
+        IO.puts("escript commandline entry")
+        WikiParser.sstart(:cli, :wipedb)
     end
   end
 end
 import Supervisor.Spec, warn: false
 
 defmodule WikiParser do
-  @moduledoc """
-  """
+  alias Neo4j.Sips, as: Neo4j
+
   use Application
 
-  @doc """
-  """
   def starter(children, extra_opts \\ []) do
-    # See http://elixir-lang.org/docs/stable/elixir/Application.html
-    # for more information on OTP Applications
     unconditonal_children = [
-      # Define workers and child supervisors to be supervised
     ]
     IO.puts("Children (#{Enum.count(children)} total): #{inspect(children)}")
     opts = extra_opts ++ [
@@ -81,8 +82,6 @@ defmodule WikiParser do
       unconditonal_children ++ children, opts)
   end
 
-  @doc """
-  """
   def start(start_type, [mix_env | start_args]) do
       Common.user_msg(
         "Application entry: #{inspect({mix_env, start_type, start_args})}")
@@ -96,21 +95,29 @@ defmodule WikiParser do
 
   # function-header, so no do/ends are needed
   def sstart(mix_env_or_mode, args \\ [])
-
-  # function-clauses that work with pattern matching
-  @doc """
-  """
   def sstart(:test, []) do
       IO.puts("entry from 'mix test'?")
       starter([])
   end
-
-  @doc """
-  """
+  def sstart(:cli, :wipedb) do
+    start_sub()
+    Common.user_msg "wipedb!"
+    cypher = """
+    MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r
+    """
+    {:ok, []} = Neo4j.query(Neo4j.conn, cypher)
+  end
   def sstart(:cli, config_file) do
     IO.puts("CLI entry: #{config_file}")
-    Application.ensure_all_started(:logger)
-    Application.ensure_all_started(:neo4j_sips_models)
+    start_sub()
+    #{:ok, john} = Person.create(
+    #  name: "John DOE", email: "john.doe@example.com",
+    #  age: 30, doe_family: true, enable_validations: true)
     Saxy.run(config_file)
+  end
+
+  def start_sub() do
+    {:ok, _} = Application.ensure_all_started(:logger)
+    {:ok, _} = Application.ensure_all_started(:neo4j_sips_models)
   end
 end

@@ -30,7 +30,9 @@ defmodule Saxy.Mixfile do
        git: "git@github.com:willemdj/erlsom.git"},
 
       # git@github.com:florinpatrascu/neo4j_sips.git
-      #{:neo4j_sips, path: "./neo4j_sips"},
+      {:neo4j_sips,
+       path: "/home/vagrant/code/neo4j_sips",
+       override: true},
       {:neo4j_sips_models, "~> 0.1"},
 
       # a linter for elixir code
