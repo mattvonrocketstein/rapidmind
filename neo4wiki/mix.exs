@@ -19,9 +19,11 @@ defmodule Saxy.Mixfile do
   end
 
   def application do
-    [applications: [
-      :logger,
-    ]]
+    [ applications: [
+        :logger,
+        :neo4j_sips,
+        :callisto],
+      mod: {WikiParser, [Mix.env]},]
   end
 
   defp deps do
@@ -33,8 +35,14 @@ defmodule Saxy.Mixfile do
       {:neo4j_sips,
        path: "/home/vagrant/code/neo4j_sips",
        override: true},
+       
       {:neo4j_sips_models, "~> 0.1"},
+      # git@github.com:florinpatrascu/neo4j_sips.git
 
+      {:callisto,
+       path: "/home/vagrant/code/callisto",},
+
+      {:neo4j_sips_models, "~> 0.1"},
       # a linter for elixir code
       {:dogma, "~> 0.1", only: :dev},
 

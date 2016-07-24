@@ -3,7 +3,7 @@
 use Mix.Config
 config :neo4j_sips, Neo4j,
   url: "http://10.0.2.2:7474",
-  pool_size: 5,
+  pool_size: 50,
   max_overflow: 2,
   timeout: 30
 
@@ -26,4 +26,4 @@ config :neo4j_sips, Neo4j,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-#     import_config "#{Mix.env}.exs"
+import_config "#{Mix.env}.exs"

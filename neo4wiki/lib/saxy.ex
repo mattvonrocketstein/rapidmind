@@ -1,13 +1,22 @@
 defmodule Saxy do
+
   defmodule SaxState do
-    defstruct title: "", text: "", element_acc: ""
+    defstruct title: "", text: "", element_acc: "", id: ""
   end
 
   @chunk 10000
 
   def run(path) do
-    {:ok, handle} = File.open(
-      path, [:binary])
+    result = File.open(path, [:binary])
+    case result do
+      {:ok, handle} ->
+        run_with_file_handle(handle)
+      {:error, :eacces} ->
+        Common.error_msg("Do you have read-access to #{path}?")
+        System.halt(1)
+    end
+  end
+  def run_with_file_handle(handle) do
     position           = 0
     c_state            = {handle, position, @chunk}
     sax_callback_state = nil
@@ -19,7 +28,6 @@ defmodule Saxy do
        &continue_file/2, c_state}])
     :ok = File.close(handle)
   end
-
   def continue_file(tail, {handle, offset, chunk}) do
     case :file.pread(handle, offset, chunk) do
       {:ok, data} ->
@@ -29,25 +37,34 @@ defmodule Saxy do
     end
   end
 
-  def create_link(state, page) do
-    #IO.puts("  creating link: #{page}")
-  end
-
   def sax_event_handler({:startElement, _, 'title', _, _}, _state) do
     %SaxState{}
   end
-
   def sax_event_handler({:startElement, _, 'text', _, _}, state) do
     %{state | element_acc: ""}
   end
-
+  def sax_event_handler({:startElement, _, 'id', _, _}, state) do
+    %{state | element_acc: ""}
+  end
   def sax_event_handler({:endElement, _, 'title', _}, state) do
     %{state | title: state.element_acc}
   end
-  def sax_event_handler({:endElement, _, 'text', _}, state) do
-    state = %{state | text: state.element_acc}
-    WikiPage.create_or_update(state)
+  def sax_event_handler({:endElement, _, 'id', _}, state) do
+    case state.id == "" do
+      false ->
+        state
+      true ->
+        %{state | id: state.element_acc}
+    end
   end
+  def sax_event_handler({:endElement, _, 'text', _}, state) do
+    %{state | text: state.element_acc}
+  end
+  def sax_event_handler({:endElement, _, 'page', _}, state) do
+    #IO.puts("#{state.id}: #{state.title}")
+    WikiPage.create_or_update_from_state(state)
+  end
+
   def sax_event_handler(:endDocument, state) do
     state
   end
