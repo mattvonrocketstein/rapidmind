@@ -42,16 +42,17 @@ defmodule Saxy.CommandLine do
   end
 
   def process(options) do
+    noargs = options[:file] == nil and options[:wipedb]==nil
     cond do
-      options[:file] == nil and options[:wipedb]==nil ->
+      noargs ->
         IO.puts("no arguments given")
         System.halt(1)
       options[:file] ->
         IO.puts("escript commandline entry")
         WikiParser.start(:cli, [options[:file]])
       options[:wipedb] ->
-        IO.puts("escript commandline entry")
-        WikiParser.sstart(:cli, :wipedb)
+        IO.puts("wipedb")
+        DB.wipedb()
     end
   end
 end

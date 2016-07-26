@@ -3,9 +3,9 @@
 use Mix.Config
 config :neo4j_sips, Neo4j,
   url: "http://10.0.2.2:7474",
-  pool_size: 50,
-  max_overflow: 2,
-  timeout: 30
+  pool_size: 10000,
+  max_overflow: 1,
+  timeout: :infinity
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this

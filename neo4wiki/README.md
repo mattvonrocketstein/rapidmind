@@ -13,31 +13,31 @@ XML parsing based on original work [here](https://github.com/benjamintanweihao/s
 ### Run tests
 
     $ mix test --cover
+    ### Run linter
 
-## Compile commandline
+        $ mix dogma
+
+    ### Run static analysis
+
+    The first time you have to build the [persistent lookup table](https://github.com/jeremyjh/dialyxir#plt), which takes a while.
+
+        $ mix dialyzer.plt
+
+    Thereafter, just run
+
+        $ mix dialyzer
+
+## Commandline (NIY)
 
     $ mix escript.build
+    $ ./neo4wiki --file dump.xml
 
-## Run commandline
+## Configuration
 
-   $ ./neo4wiki --file dump.xml
-
-### Run linter
-
-    $ mix dogma
-
-### Run static analysis
-
-The first time you have to build the [persistent lookup table](https://github.com/jeremyjh/dialyxir#plt), which takes a while.
-
-    $ mix dialyzer.plt
-
-Thereafter, just run
-
-    $ mix dialyzer
+Set the ip and port information for the neo4j server inside the `config/config.exs` file.
 
 ## Running it
-
+    $ mix load wikidump.xml
     % iex -S mix
     iex(1)> Saxy.run("path_to_wiki_xml_dump/dump.xml")
 

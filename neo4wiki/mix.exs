@@ -10,10 +10,10 @@ defmodule Saxy.Mixfile do
      test_coverage: [
        tool: Coverex.Task,
        console_log: true],
-     escript: [
-       main_module: Saxy.CommandLine,
-       app: nil
-       ],
+     #escript: [
+     # main_module: Saxy.CommandLine,
+     # app: nil
+     # ],
      aliases: aliases,
    ]
   end
@@ -23,7 +23,7 @@ defmodule Saxy.Mixfile do
         :logger,
         :neo4j_sips,
         :callisto],
-      mod: {WikiParser, [Mix.env]},]
+      mod: {WikiParser, Mix.env},]
   end
 
   defp deps do
@@ -35,7 +35,7 @@ defmodule Saxy.Mixfile do
       {:neo4j_sips,
        path: "/home/vagrant/code/neo4j_sips",
        override: true},
-       
+
       {:neo4j_sips_models, "~> 0.1"},
       # git@github.com:florinpatrascu/neo4j_sips.git
 
