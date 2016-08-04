@@ -1,12 +1,3 @@
-require IEx
-defmodule Mix.Tasks.Shell do
-  use Mix.Task
-
-  def run(_) do
-    IEx.pry
-  end
-end
-
 defmodule Saxy.CommandLine do
   @moduledoc """
   """

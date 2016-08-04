@@ -14,13 +14,16 @@ defmodule DB do
     """
     {:ok, [ %{"COUNT(*)" => count } | _ ]} =
       DB.run(batch_cypher)
+
     case count in [0, 1] do
       true ->
         Common.user_msg("database is empty.  adding indexes")
-        DB.run("""
-        CREATE INDEX ON :WikiPage(title)
-        CREATE CONSTRAINT ON (WikiPage) ASSERT title IS UNIQUE
-        """)
+        cypher = "CREATE CONSTRAINT ON (wp:WikiPage) ASSERT wp.title IS UNIQUE"
+        {:ok, result} = DB.run(cypher)
+        IO.puts("#{inspect [cypher,result]}")
+        cypher = "CREATE CONSTRAINT ON (wp:WikiPage) ASSERT wp.page_id IS UNIQUE"
+        {:ok, result} = DB.run(cypher)
+        IO.puts("#{inspect [cypher,result]}")
       false ->
         IO.puts "#{count} items left in database"
         DB.wipedb()

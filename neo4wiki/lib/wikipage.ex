@@ -1,5 +1,4 @@
-alias Neo4j.Sips, as: Neo4j
-alias Callisto.{Query, Vertex, Cypher}
+alias Callisto.{Query, Vertex}
 
 defmodule WikiPage do
   #use Neo4j.Model
@@ -24,12 +23,11 @@ defmodule WikiPage do
       true ->
         nil
       false ->
-        {:ok, [%{"ID(node)" => node_id}]} = %Query{}
-        |> Query.merge([{"node:WikiPage", %{"title" => "#{title}"}}])
+        u1 = get_vertex(title)
+        cypher = Query.merge(node: u1)
         |> Query.returning("ID(node)")
-        |>to_string
-        |>DB.run
-        #{:ok, page} = WikiPage.create(title: title)
+        |> to_string
+        {:ok, [%{"ID(node)" => node_id}]} = DB.run(cypher)
         PageEvents.created(title, nil)
         title
       end
@@ -60,51 +58,47 @@ defmodule WikiPage do
     get_or_create_from_title(title)
     title
   end
-
+  def get_vertex(title) do
+    Vertex.cast("WikiPage", %{'title' => to_string(title),})
+  end
   def create_or_update_from_state(state) do
     title = get_or_create_from_title(state.title)
     if title != nil do
         subpages = get_subpages(state.text)
         IO.puts("#{Enum.count(subpages)} outgoing links for #{state.title}")
-        %Query{}
-        |> Query.merge([{"u1:WikiPage", %{"title" => "#{state.title}"}}])
-        #|>Query.set("u1.page_id = #{String.to_integer(state.id)}")
-        |>to_string|>DB.run
-        #DB.run("""
-        #MERGE (u1:WikiPage { title: "#{state.title}" })
-        #SET u1.page_id = #{String.to_integer(state.id)}
-        #{}""")
-        #WikiPage.update(
-        #  page,
-        #  page_id: String.to_integer(state.id),
-        #  text: state.text,
-        #  #links_to: subpages
-        #  )
-        #PageEvents.updated(page_id, state)
+        u1 = get_vertex(state.title)
+        page_id = String.to_integer(state.id)
+        cypher=
+          to_string(
+            Query.merge(u1: u1)) <>
+            " on match set u1.page_id=#{page_id} " <>
+            to_string(Query.returning("ID(u1)"))
+        IO.puts cypher
+        {:ok, [result]} = DB.run(cypher)
+        IO.puts inspect(result)
         Enum.map(
             subpages,
             fn(subpage_title) ->
-              make_link(title,subpage_title)
-              #Task.start_link(fn -> make_link(title,subpage_title) end)
+              make_link(title, subpage_title)
             end)
         PageEvents.updated(title, state)
     end
   end
   def make_link(title,subpage_title) do
     q = %Query{}
+    u1 = get_vertex(title)
+    u2 = get_vertex(subpage_title)
     cypher = [
-      q |> Query.merge([{
-        "u1:WikiPage",
-        %{"title" => "#{title}"}}]),
-      q |> Query.merge([{
-        "u2:WikiPage",
-        %{"title" => "#{subpage_title}"}}]),
-      q |> Query.create("UNIQUE u1-[r:links_to]-u2"),
-      q |> Query.returning("r")]
-      |> Enum.map(&to_string/1)
-      |> Enum.join("\n")
+      Query.merge(u1: u1),
+      Query.merge(u2: u2),
+      Query.create("UNIQUE u1-[r:links_to]-u2"),
+      Query.returning("r")
+    ]
+    cypher = cypher
+    |> Enum.map(&to_string/1)
+    |> Enum.join("\n")
     IO.puts cypher
-    {:ok, result} = DB.run(cypher)
+    {:ok, [result]} = DB.run(cypher)
     #IO.puts "#{inspect result}"
     PageEvents.linked(title, subpage_title)
   end
