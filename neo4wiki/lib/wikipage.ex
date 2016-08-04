@@ -1,4 +1,5 @@
 alias Callisto.{Query, Vertex}
+#TimeLongCommands:: total time: 1:17:57.270137
 
 defmodule WikiPage do
   #use Neo4j.Model
@@ -11,6 +12,7 @@ defmodule WikiPage do
     String.starts_with?(title, "Talk:") or
     String.starts_with?(title, "File:") or
     String.starts_with?(title, "User") or
+    String.starts_with?(title, "Wikivoyage:") or
     String.starts_with?(title, "MediaWiki:") or
     String.starts_with?(title, "Category:") or
     String.starts_with?(title, "Template:") or
@@ -28,12 +30,10 @@ defmodule WikiPage do
         |> Query.returning("ID(node)")
         |> to_string
         {:ok, [%{"ID(node)" => node_id}]} = DB.run(cypher)
-        PageEvents.created(title, nil)
         title
       end
   end
-  def get_subpages(text) do
-    Common.user_msg("extracting linked pages from text")
+  def get_linked_pages(text) do
     link_regex = ~r/\[\[([\w\d\s])+\]\]/
     text_links = Enum.map(
       Regex.scan(link_regex, text),
@@ -47,41 +47,37 @@ defmodule WikiPage do
         &WikiPage.skip?/1)
     linked_pages = Enum.map(
       text_links,
-      &get_or_create_sub_from_title/1)
-    linked_pages = Enum.reject(linked_pages, fn(x)->x==nil end)
+      &get_or_create_from_title/1)
+    linked_pages = Enum.reject(linked_pages, fn(x) -> x==nil end)
     linked_pages
   end
 
-  def get_or_create_sub_from_title(title) do
-    Common.user_msg("  creating sub-page: #{title}")
-    #Task.start_link(fn -> get_or_create_from_title(title) end)
-    get_or_create_from_title(title)
-    title
-  end
   def get_vertex(title) do
     Vertex.cast("WikiPage", %{'title' => to_string(title),})
   end
+
   def create_or_update_from_state(state) do
     title = get_or_create_from_title(state.title)
     if title != nil do
-        subpages = get_subpages(state.text)
-        IO.puts("#{Enum.count(subpages)} outgoing links for #{state.title}")
-        u1 = get_vertex(state.title)
+      Common.user_msg("extracting linked pages for `#{title}`")
+        linked_pages = get_linked_pages(state.text)
+        IO.puts("#{Enum.count(linked_pages)} outgoing links for #{state.title}")
         page_id = String.to_integer(state.id)
-        cypher=
-          to_string(
-            Query.merge(u1: u1)) <>
-            " on match set u1.page_id=#{page_id} " <>
-            to_string(Query.returning("ID(u1)"))
-        IO.puts cypher
+        cypher = [
+          Query.merge(u1: get_vertex(state.title)),
+          " on match set u1.page_id=#{page_id} ",
+          Query.returning("ID(u1)") ]
+          cypher = cypher
+          |> Enum.map(&to_string/1)
+          |> Enum.join
         {:ok, [result]} = DB.run(cypher)
-        IO.puts inspect(result)
+        #IO.puts inspect(result)
         Enum.map(
-            subpages,
+            linked_pages,
             fn(subpage_title) ->
               make_link(title, subpage_title)
             end)
-        PageEvents.updated(title, state)
+        title
     end
   end
   def make_link(title,subpage_title) do
@@ -97,9 +93,6 @@ defmodule WikiPage do
     cypher = cypher
     |> Enum.map(&to_string/1)
     |> Enum.join("\n")
-    IO.puts cypher
     {:ok, [result]} = DB.run(cypher)
-    #IO.puts "#{inspect result}"
-    PageEvents.linked(title, subpage_title)
   end
 end
