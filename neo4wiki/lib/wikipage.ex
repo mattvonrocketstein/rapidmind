@@ -33,6 +33,7 @@ defmodule WikiPage do
         title
       end
   end
+
   def get_linked_pages(text) do
     link_regex = ~r/\[\[([\w\d\s])+\]\]/
     text_links = Enum.map(
@@ -80,14 +81,14 @@ defmodule WikiPage do
         title
     end
   end
-  def make_link(title,subpage_title) do
+  def make_link(title, subpage_title, relationship\\"links_to") do
     q = %Query{}
     u1 = get_vertex(title)
     u2 = get_vertex(subpage_title)
     cypher = [
       Query.merge(u1: u1),
       Query.merge(u2: u2),
-      Query.create("UNIQUE u1-[r:links_to]-u2"),
+      Query.create("UNIQUE u1-[r:"<>relationship<>"]-u2"),
       Query.returning("r")
     ]
     cypher = cypher

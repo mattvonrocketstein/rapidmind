@@ -83,14 +83,8 @@ end
 
 defmodule WikiMediaDumpParser do
   use WikiDumpParser
+
   def page_callback(state) do
     WikiPage.create_or_update_from_state state
-  end
-end
-
-defmodule WikiVoyageDumpParser do
-  use WikiDumpParser
-  def page_callback(state) do
-    IO.puts "#{inspect state.title}"
   end
 end

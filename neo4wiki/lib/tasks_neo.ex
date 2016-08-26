@@ -32,6 +32,10 @@ defmodule Mix.Tasks.Stats do
   match n
   return count(n) as node_count
   """
+  @total_rels """
+  MATCH (x)-[r]->(y)
+  RETURN count(r) as rel_count
+  """
   @orphans """
   start n=node(*)
   optional match n-[r]-()
@@ -43,6 +47,11 @@ defmodule Mix.Tasks.Stats do
     {:ok, [%{"node_count"=>node_count}] } = DB.run(@total_nodes)
     Common.user_msg( "\nNode Count: ")
     IO.puts("  #{node_count}")
+  end
+  def count_rels() do
+    {:ok, [%{"rel_count"=>rel_count}] } = DB.run(@total_rels)
+    Common.user_msg( "\nRelationship Count: ")
+    IO.puts("  #{rel_count}")
   end
   def orphans() do
     {:ok, results } = DB.run(@orphans)
@@ -72,6 +81,7 @@ defmodule Mix.Tasks.Stats do
   end
   def main("count") do
     count_nodes()
+    count_rels()
   end
   def main("throughput") do
     IO.puts "niy"

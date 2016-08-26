@@ -27,16 +27,12 @@ XML parsing based on original work [here](https://github.com/benjamintanweihao/s
 
         $ mix dialyzer
 
-## Commandline (NIY)
-
-    $ mix escript.build
-    $ ./neo4wiki --file dump.xml
-
 ## Configuration
 
 Set the ip and port information for the neo4j server inside the `config/config.exs` file.
 
 ## Running it
+
     $ mix load wikidump.xml
     % iex -S mix
     iex(1)> Saxy.run("path_to_wiki_xml_dump/dump.xml")
