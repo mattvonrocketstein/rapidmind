@@ -1,7 +1,4 @@
-*/_build
-*/deps/*
+/_build
+/deps
+erl_crash.dump
 *.ez
-*/erl_crash.dump
-*.ez
-rasp/rasp
-.#*
