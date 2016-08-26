@@ -1,4 +1,0 @@
-Automata
-========
-
-** TODO: Add description **
