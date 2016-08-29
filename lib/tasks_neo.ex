@@ -1,3 +1,5 @@
+# Generic tasks for interacting with Neo4j Server
+
 defmodule Mix.Tasks.Wipedb do
   use Mix.Task
   def run([]) do
@@ -5,9 +7,9 @@ defmodule Mix.Tasks.Wipedb do
     DB.wipedb()
   end
 end
+
 defmodule Mix.Tasks.Cypher do
   use Mix.Task
-  # mix cypher "start n=node(*) match n-[r]-() return n, count(r) as rel_count order by rel_count desc"
 
   def run(cypher) do
     MixCommon.start()

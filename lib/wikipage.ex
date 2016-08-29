@@ -1,11 +1,6 @@
 alias Callisto.{Query, Vertex}
-#TimeLongCommands:: total time: 1:17:57.270137
 
 defmodule WikiPage do
-  #use Neo4j.Model
-  #field :page_id, type: :integer, required: false
-  #field :title, required: true, unique: true
-  #field :text, required: false
 
   def skip?(title) do
     title==nil or title=="" or
@@ -16,7 +11,7 @@ defmodule WikiPage do
     String.starts_with?(title, "MediaWiki:") or
     String.starts_with?(title, "Category:") or
     String.starts_with?(title, "Template:") or
-    String.starts_with?(title, "Wikipedia") or
+    String.starts_with?(title, "Wiki") or
     String.starts_with?(title, "Help")
   end
 
@@ -64,15 +59,17 @@ defmodule WikiPage do
         linked_pages = get_linked_pages(state.text)
         IO.puts("#{Enum.count(linked_pages)} outgoing links for #{state.title}")
         page_id = String.to_integer(state.id)
+        txt = String.replace(
+          String.replace(state.text,"\\",""),
+          "\"","")
         cypher = [
           Query.merge(u1: get_vertex(state.title)),
-          " on match set u1.page_id=#{page_id} ",
+          " on match set u1.page_id=#{page_id}, u1.body=\"#{txt}\" ",
           Query.returning("ID(u1)") ]
           cypher = cypher
           |> Enum.map(&to_string/1)
           |> Enum.join
         {:ok, [result]} = DB.run(cypher)
-        #IO.puts inspect(result)
         Enum.map(
             linked_pages,
             fn(subpage_title) ->
@@ -88,7 +85,7 @@ defmodule WikiPage do
     cypher = [
       Query.merge(u1: u1),
       Query.merge(u2: u2),
-      Query.create("UNIQUE u1-[r:"<>relationship<>"]-u2"),
+      Query.create("UNIQUE (u1)-[r:"<>relationship<>"]-(u2)"),
       Query.returning("r")
     ]
     cypher = cypher

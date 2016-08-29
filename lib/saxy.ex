@@ -3,6 +3,9 @@ defmodule SaxState do
 end
 
 defmodule WikiDumpParser do
+  @moduledoc """
+  Abstract WikiMedia dump parser.  Specific parsers must `use WikiDumpParser`
+  """
   defmacro __using__(_) do
     quote do
       @chunk 10000
@@ -78,13 +81,5 @@ defmodule WikiDumpParser do
          state
       end
     end
-  end
-end
-
-defmodule WikiMediaDumpParser do
-  use WikiDumpParser
-
-  def page_callback(state) do
-    WikiPage.create_or_update_from_state state
   end
 end

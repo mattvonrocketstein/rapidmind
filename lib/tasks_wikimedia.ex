@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Load do
   with wikipedia dumps, etc
   """
   use Mix.Task
-  @default_dumpfile "/media/sf_Downloads/wikivoyage.xml"
+  @default_dumpfile "./wikivoyage.xml"
 
   def run(anything) do
     MixCommon.start()
