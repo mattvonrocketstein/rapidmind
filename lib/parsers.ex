@@ -18,24 +18,25 @@ defmodule WikiVoyageDumpParser do
   use WikiDumpParser
 
   def get_partof(text) do
-    link_regex = ~r/\{\{isPartOf\|.*\}\}/
+    link_regex = ~r/\{\{(i|I)sPartOf\|.*\}\}/
     results = Regex.scan(link_regex, text)
-    |> Enum.map(fn ([match]) ->
+    |> Enum.map(fn ([match, _]) ->
       match
-      |> String.replace("{{isPartOf|","")
+      |> String.replace("{{","")
+      |> String.replace("isPartOf|","")
+      |> String.replace("IsPartOf|","")
       |> String.replace("}}","")
       |> String.strip
     end)
-    |>List.first
+    |> List.first
   end
 
   def page_callback(state) do
     part_of = get_partof(state.text)
     if part_of != nil do
-      IO.puts "#{inspect [state.title,part_of]}"
+      IO.puts("#{part_of} -contains-> #{state.title}")
       WikiPage.make_link(
-        state.title, part_of,
-        "part_of")
+        part_of, state.title, "contains")
     end
   end
 end
