@@ -1,14 +1,18 @@
 defmodule WikiMediaDumpParser do
   @moduledoc """
-  Generic Wikimedia dump parser: XML parsing stuff that is useful
-  in general (not limited to wikivoyage parsing)
+  Concrete but generic, this WikiMediaDumpParser uses the abstract
+  WikiDumpParser to do most of the work.  XML parsing stuff here is
+  useful in general (read: not limited to wikivoyage parsing)
   """
   use WikiDumpParser
   def page_callback(state) do
     WikiPage.create_or_update_from_state state
+    #x = ParserFactory.get_parser(&WikiPage.create_or_update_from_state/1)
+    #IO.puts("#{x}")
+    #System.halt(1)
+    #end
   end
 end
-
 defmodule WikiVoyageDumpParser do
   @moduledoc """
   Wikivoyage dump parser: XML parsing functions that are specific
@@ -17,26 +21,28 @@ defmodule WikiVoyageDumpParser do
 
   use WikiDumpParser
 
-  def get_partof(text) do
-    link_regex = ~r/\{\{(i|I)sPartOf\|.*\}\}/
+  def get_container(text) do
+    # the /iu at the end of the regex sigil means
+    # it's both case-insensitive and unicode aware. see also:
+    # http://elixir-lang.org/docs/stable/elixir/Regex.html
+    link_regex = ~r/\{\{ispartof\|.*\}\}/iu
     results = Regex.scan(link_regex, text)
-    |> Enum.map(fn ([match, _]) ->
+    |> Enum.map(fn ([match]) ->
       match
-      |> String.replace("{{","")
-      |> String.replace("isPartOf|","")
-      |> String.replace("IsPartOf|","")
-      |> String.replace("}}","")
+      |> String.replace("{{", "")
+      |> String.replace("isPartOf|", "")
+      |> String.replace("IsPartOf|", "")
+      |> String.replace("}}", "")
       |> String.strip
     end)
     |> List.first
   end
 
   def page_callback(state) do
-    part_of = get_partof(state.text)
-    if part_of != nil do
-      IO.puts("#{part_of} -contains-> #{state.title}")
-      WikiPage.make_link(
-        part_of, state.title, "contains")
+    container = get_container(state.text)
+    if container != nil do
+      IO.puts("#{container} -contains-> #{state.title}")
+      WikiPage.make_link(container, state.title, "contains")
     end
   end
 end

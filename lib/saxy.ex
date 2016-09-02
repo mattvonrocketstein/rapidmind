@@ -4,7 +4,9 @@ end
 
 defmodule WikiDumpParser do
   @moduledoc """
-  Abstract WikiMedia dump parser.  Specific parsers must `use WikiDumpParser`
+  Abstract WikiMedia dump parser.
+
+  Specific parsers must extend this module with "use WikiDumpParser"
   """
   defmacro __using__(_) do
     quote do
@@ -32,7 +34,6 @@ defmodule WikiDumpParser do
            &continue_file/2, c_state}])
         :ok = File.close(handle)
       end
-
       def continue_file(tail, {handle, offset, chunk}) do
         case :file.pread(handle, offset, chunk) do
           {:ok, data} ->
@@ -41,7 +42,6 @@ defmodule WikiDumpParser do
             {tail, {handle, offset, chunk}}
         end
       end
-
       def sax_event_handler({:startElement, _, 'title', _, _}, _state) do
         %SaxState{}
       end
@@ -66,17 +66,14 @@ defmodule WikiDumpParser do
         %{state | text: state.element_acc}
       end
       def sax_event_handler({:endElement, x_, 'page', y_}, state) do
-        #WikiPage.create_or_update_from_state(state)
         __MODULE__.page_callback(state)
       end
-
       def sax_event_handler(:endDocument, state) do
         state
       end
       def sax_event_handler({:characters, value}, %SaxState{element_acc: element_acc} = state) do
         %{state | element_acc: element_acc <> to_string(value)}
       end
-
       def sax_event_handler(_, state) do
          state
       end

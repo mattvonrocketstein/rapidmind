@@ -1,0 +1,48 @@
+node {
+  diameter: 40px;
+  color: #DFE1E3;
+  border-color: #D4D6D7;
+  border-width: 2px;
+  text-color-internal: #000000;
+  caption: '{id}';
+  font-size: 10px;
+}
+
+relationship {
+  color: #D4D6D7;
+  shaft-width: 1px;
+  font-size: 8px;
+  padding: 3px;
+  text-color-external: #000000;
+  text-color-internal: #FFFFFF;
+}
+
+node.WikiPage {
+  color: #EFEFEFe;
+  border-color: #DC4717;
+  text-color-internal: black;
+  diameter: 120px;
+  border-width: 2px;
+  caption: '{title}';
+  font-size: 10px;
+}
+
+relationship.links_to {
+  color: #0055A4;
+  shaft-width: 5px;
+  font-size: 8px;
+  padding: 3px;
+  text-color-external: #000000;
+  text-color-internal: #FFFFFF;
+  border-color: #0055A4;
+}
+
+relationship.contains {
+  color: #EF4135;
+  shaft-width: 13px;
+  font-size: 8px;
+  padding: 3px;
+  text-color-external: #000000;
+  text-color-internal: #FFFFFF;
+  border-color: #EF4135;
+}
