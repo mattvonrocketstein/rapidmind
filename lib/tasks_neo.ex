@@ -23,16 +23,14 @@ defmodule Mix.Tasks.Stats do
 
   @top_ten_by_links """
   // Top-ten Articles by link-count
-  start n=node(*)
-  match n-[r]-()
-  return n, count(r) as rel_count
-  order by rel_count desc
-  limit 10
+  MATCH (n)-[r]-()
+  RETURN n, count(r) as rel_count
+  ORDER BY rel_count desc
+  LIMIT 10
   """
   @total_nodes """
-  start n=node(*)
-  match n
-  return count(n) as node_count
+  MATCH (n)
+  RETURN count(n) as node_count
   """
   @total_rels """
   MATCH (x)-[r]->(y)
@@ -40,10 +38,10 @@ defmodule Mix.Tasks.Stats do
   """
   @orphans """
   start n=node(*)
-  optional match n-[r]-()
-  where r is null
-  return ID(n),n
-  limit 5
+  OPTIONAL match *-[r]-()
+  WHERE r is null
+  RETURN ID(n),n
+  LIMIT 5
   """
   def count_nodes() do
     {:ok, [%{"node_count"=>node_count}] } = DB.run(@total_nodes)
