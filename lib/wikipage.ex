@@ -1,6 +1,7 @@
 alias Callisto.{Query, Vertex}
 
 defmodule WikiPage do
+  use Retry
 
   def skip?(title) do
     title==nil or title=="" or
@@ -34,9 +35,7 @@ defmodule WikiPage do
     text_links = Enum.map(
       Regex.scan(link_regex, text),
       fn ([match, _]) ->
-        match
-        |> String.replace("[[","")
-        |> String.replace("]]","")
+        Regex.replace(~r/(\[\[|\]\])/, match, "")
       end)
     text_links = Enum.reject(
         text_links,
@@ -44,7 +43,9 @@ defmodule WikiPage do
     linked_pages = Enum.map(
       text_links,
       &get_or_create_from_title/1)
-    linked_pages = Enum.reject(linked_pages, fn(x) -> x==nil end)
+    linked_pages = Enum.reject(
+      linked_pages,
+      fn(x) -> x==nil end)
     linked_pages
   end
 
@@ -53,6 +54,13 @@ defmodule WikiPage do
   end
 
   def create_or_update_from_state(state) do
+    #retry_args = lin_backoff(10, 2) |> cap(1_000) |> Stream.take(10)
+    retry with: [100,200,500,1000] do
+      create_or_update_from_state_retry(state)
+    end
+end
+  end
+  def create_or_update_from_state_retry(state) do
     title = get_or_create_from_title(state.title)
     if title != nil do
       Common.user_msg("extracting linked pages for `#{title}`")

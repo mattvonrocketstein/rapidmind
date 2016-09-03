@@ -20,7 +20,7 @@ defmodule Saxy.Mixfile do
 
   def application do
     [ applications: [
-        :logger,
+        :logger, :retry,
         :neo4j_sips,
         :callisto],
       mod: {WikiParser, Mix.env},]
@@ -28,6 +28,7 @@ defmodule Saxy.Mixfile do
 
   defp deps do
     [
+      {:retry, "~> 0.5.0"},
       {:erlsom,
        git: "git@github.com:willemdj/erlsom.git"},
 

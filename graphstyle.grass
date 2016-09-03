@@ -18,7 +18,7 @@ relationship {
 }
 
 node.WikiPage {
-  color: #EFEFEFe;
+  color: #EFEFEF;
   border-color: #DC4717;
   text-color-internal: black;
   diameter: 120px;
@@ -27,6 +27,15 @@ node.WikiPage {
   font-size: 10px;
 }
 
+node.Continent {
+  color: "green";
+  border-color: "green";
+  text-color-internal: black;
+  diameter: 120px;
+  border-width: 2px;
+  caption: '{title}';
+  font-size: 10px;
+}
 relationship.links_to {
   color: #0055A4;
   shaft-width: 5px;
