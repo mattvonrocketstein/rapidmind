@@ -56,9 +56,8 @@ defmodule WikiPage do
   def create_or_update_from_state(state) do
     #retry_args = lin_backoff(10, 2) |> cap(1_000) |> Stream.take(10)
     retry with: [100,200,500,1000] do
-      create_or_update_from_state_retry(state)
+      create_or_update_from_state_retry(state) 
     end
-end
   end
   def create_or_update_from_state_retry(state) do
     title = get_or_create_from_title(state.title)
