@@ -26,10 +26,10 @@ defmodule Mix.Tasks.Update do
           use WikiDumpParser
           def page_callback(state) do
             title = state.title
+            {:ok, re} = Regex.compile("^" <> unquote(pattern))
             cond do
-              title == unquote(pattern) ->
+              Regex.match?(re, title) ->
                 WikiPage.create_or_update_from_state state
-                System.halt(0)
               true ->
                 IO.puts("skipping #{title}")
             end
